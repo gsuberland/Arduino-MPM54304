@@ -320,6 +320,8 @@ public:
   void setClock1000KHz();
   void setClock3400KHz();
 
+  void printConfig();
+
   // system settings
   
   void enableBuck(uint8_t buck);

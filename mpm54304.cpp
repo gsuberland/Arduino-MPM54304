@@ -79,6 +79,88 @@ MPM54304_SYSTEM_CONFIG* MPM54304::getSystemConfigUnsafe()
 }
 
 
+void MPM54304::printConfig()
+{
+  const char* MPM54304SlewRate_names[] = { "MPM54304_SLEW_RATE_2670uV", "MPM54304_SLEW_RATE_1600uV", "MPM54304_SLEW_RATE_1000uV", "MPM54304_SLEW_RATE_670uV", "MPM54304_SLEW_RATE_400uV", "MPM54304_SLEW_RATE_250uV", "MPM54304_SLEW_RATE_167uV", "MPM54304_SLEW_RATE_100uV" };
+  const char* MPM54304SwitchingMode_names[] = { "MPM54304_MODE_AUTO_PFM_PWM", "MPM54304_MODE_FORCED_PWM" };
+  const char* MPM54304CurrentLimit_names[] = { "MPM54304_CURRENT_LIMIT_2A_VALLEY_1A_OUTPUT", "MPM54304_CURRENT_LIMIT_3A_VALLEY_2A_OUTPUT", "MPM54304_CURRENT_LIMIT_4A_VALLEY_3A_OUTPUT", "MPM54304_CURRENT_LIMIT_5A_VALLEY_5A_OUTPUT" };
+  const char* MPM54304PhaseDelay_names[] = { "MPM54304_PHASE_DELAY_0", "MPM54304_PHASE_DELAY_90", "MPM54304_PHASE_DELAY_180", "MPM54304_PHASE_DELAY_270" };
+  const char* MPM54304FeedbackRatio_names[] = { "MPM54304_FEEDBACK_DIRECT", "MPM54304_FEEDBACK_ONE_THIRD" };
+  const char* MPM54304UnderVoltageThreshold_names[] = { "MPM54304_UVLO_THRESHOLD_3500mV", "MPM54304_UVLO_THRESHOLD_4500mV", "MPM54304_UVLO_THRESHOLD_5800mV", "MPM54304_UVLO_THRESHOLD_8500mV" };
+  const char* MPM54304OutputPortSyncMode_names[] = { "MPM54304_OP_SYNCOUT_PULL_LOW", "MPM54304_OP_SYNCOUT_OPEN_DRAIN" };
+  const char* MPM54304SwitchingFrequency_names[] = { "MPM54304_SWITCHING_533KHz", "MPM54304_SWITCHING_800KHz", "MPM54304_SWITCHING_1060KHz", "MPM54304_SWITCHING_1600KHz" };
+  const char* MPM54304OutputPinFunction_names[] = { "MPM54304_OUTPUT_PIN_ADDRESS", "MPM54304_OUTPUT_PIN_POWER_GOOD", "MPM54304_OUTPUT_PIN_GPIO", "MPM54304_OUTPUT_PIN_SYNC" };
+  const char* MPM54304PowerGoodDelay_names[] = { "MPM54304_PG_DELAY_200us", "MPM54304_PG_DELAY_5ms", "MPM54304_PG_DELAY_25ms", "MPM54304_PG_DELAY_75ms", "MPM54304_PG_DELAY_200ms" };
+  
+  Serial.println("");
+  Serial.print("Configuration for MPM54304 device at address 0x");
+  Serial.println(this->_address, HEX);
+  Serial.println("");
+
+  MPM54304_SYSTEM_CONFIG* syscfg = &this->_systemConfig;
+  Serial.println("SYSTEM CONFIG:");
+  
+  Serial.print("MPM54304_SYSTEM_CONFIG.Reg0x0C = 0x"); Serial.print(syscfg->Reg0x0C, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.EnableBuck1 = "); Serial.println(syscfg->EnableBuck1 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.EnableBuck2 = "); Serial.println(syscfg->EnableBuck2 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.EnableBuck3 = "); Serial.println(syscfg->EnableBuck3 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.EnableBuck4 = "); Serial.println(syscfg->EnableBuck4 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.UnderVoltageThreshold = "); Serial.print(MPM54304UnderVoltageThreshold_names[syscfg->UnderVoltageThreshold]); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.OutputPortSyncMode = "); Serial.print(MPM54304OutputPortSyncMode_names[syscfg->OutputPortSyncMode]); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.Reg0x0D = 0x"); Serial.print(syscfg->Reg0x0D, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.SwitchingFrequency = "); Serial.print(MPM54304SwitchingFrequency_names[syscfg->SwitchingFrequency]); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.ShutdownDelayEnable = "); Serial.println(syscfg->ShutdownDelayEnable ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.I2CAddress = 0x"); Serial.print(syscfg->I2CAddress, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.Reg0x0E = 0x"); Serial.print(syscfg->Reg0x0E, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.OutputPinFunction = "); Serial.print(MPM54304OutputPinFunction_names[syscfg->OutputPinFunction]); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.MTPProgram = "); Serial.println(syscfg->MTPProgram ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.PowerGoodDelay = "); Serial.print(MPM54304PowerGoodDelay_names[syscfg->PowerGoodDelay]); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.ParallelBuck34 = "); Serial.println(syscfg->ParallelBuck34 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.ParallelBuck12 = "); Serial.println(syscfg->ParallelBuck12 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.Reg0x0F = 0x"); Serial.print(syscfg->Reg0x0F, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.MTPConfigureCode = 0x"); Serial.print(syscfg->MTPConfigureCode, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.Reg0x10 = 0x"); Serial.print(syscfg->Reg0x10, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.MTPRevisionNumber = 0x"); Serial.print(syscfg->MTPRevisionNumber, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.Reg0x11 = 0x"); Serial.print(syscfg->Reg0x11, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.MTPProgramPassword = 0x"); Serial.print(syscfg->MTPProgramPassword, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.Reg0x12 = 0x"); Serial.print(syscfg->Reg0x12, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.PowerGoodBuck1 = "); Serial.println(syscfg->PowerGoodBuck1 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.PowerGoodBuck2 = "); Serial.println(syscfg->PowerGoodBuck2 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.PowerGoodBuck3 = "); Serial.println(syscfg->PowerGoodBuck3 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.PowerGoodBuck4 = "); Serial.println(syscfg->PowerGoodBuck4 ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.OverTemperatureWarning = "); Serial.println(syscfg->OverTemperatureWarning ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.OverTemperatureProtection = "); Serial.println(syscfg->OverTemperatureProtection ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.Reg0x13 = 0x"); Serial.print(syscfg->Reg0x13, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.VendorID = 0x"); Serial.print(syscfg->VendorID, HEX); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.ChecksumFlag = "); Serial.println(syscfg->ChecksumFlag ? "true" : "false");
+  Serial.print("MPM54304_SYSTEM_CONFIG.CurrentMTPPageIndex = 0x"); Serial.print(syscfg->CurrentMTPPageIndex, HEX); Serial.println("");
+  Serial.println("");
+
+  for (int i = 0; i < 4; i++)
+  {
+    MPM54304_BUCK_CONFIG* buckcfg = &this->_buckConfig[i];
+    Serial.print("BUCK ");
+    Serial.print(i+1);
+    Serial.println(" CONFIG:");
+    Serial.print("MPM54304_BUCK_CONFIG.Byte0 = 0x"); Serial.print(buckcfg->Byte0, HEX); Serial.println("");
+    Serial.print("MPM54304_BUCK_CONFIG.SoftStartDelayMillis = 0x"); Serial.print(buckcfg->SoftStartDelayMillis, HEX); Serial.println("");
+    Serial.print("MPM54304_BUCK_CONFIG.AdditionalPhaseDelay = "); Serial.println(buckcfg->AdditionalPhaseDelay ? "true" : "false");
+    Serial.print("MPM54304_BUCK_CONFIG.SoftStartTime = "); Serial.print(MPM54304SlewRate_names[buckcfg->SoftStartTime]); Serial.println("");
+    Serial.print("MPM54304_BUCK_CONFIG.Byte1 = 0x"); Serial.print(buckcfg->Byte1, HEX); Serial.println("");
+    Serial.print("MPM54304_BUCK_CONFIG.VoltageOutLimitEnable = "); Serial.println(buckcfg->VoltageOutLimitEnable ? "true" : "false");
+    Serial.print("MPM54304_BUCK_CONFIG.SwitchingMode = "); Serial.print(MPM54304SwitchingMode_names[buckcfg->SwitchingMode]); Serial.println("");
+    Serial.print("MPM54304_BUCK_CONFIG.CurrentLimit = "); Serial.print(MPM54304CurrentLimit_names[buckcfg->CurrentLimit]); Serial.println("");
+    Serial.print("MPM54304_BUCK_CONFIG.OverVoltageProtectionEnable = "); Serial.println(buckcfg->OverVoltageProtectionEnable ? "true" : "false");
+    Serial.print("MPM54304_BUCK_CONFIG.PhaseDelay = "); Serial.print(MPM54304PhaseDelay_names[buckcfg->PhaseDelay]); Serial.println("");
+    Serial.print("MPM54304_BUCK_CONFIG.VoltageOutDischargeEnable = "); Serial.println(buckcfg->VoltageOutDischargeEnable ? "true" : "false");
+    Serial.print("MPM54304_BUCK_CONFIG.Byte2 = 0x"); Serial.print(buckcfg->Byte2, HEX); Serial.println("");
+    Serial.print("MPM54304_BUCK_CONFIG.FeedbackRatio = "); Serial.print(MPM54304FeedbackRatio_names[buckcfg->FeedbackRatio]); Serial.println("");
+    Serial.print("MPM54304_BUCK_CONFIG.VoltageReference = 0x"); Serial.print(buckcfg->VoltageReference, HEX); Serial.println("");
+    Serial.println("");
+  }
+}
+
+
 /*
  * System config
  */
