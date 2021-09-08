@@ -78,7 +78,7 @@ void MPM54304::printConfig()
   const char* MPM54304PhaseDelay_names[] = { "MPM54304_PHASE_DELAY_0", "MPM54304_PHASE_DELAY_90", "MPM54304_PHASE_DELAY_180", "MPM54304_PHASE_DELAY_270" };
   const char* MPM54304FeedbackRatio_names[] = { "MPM54304_FEEDBACK_DIRECT", "MPM54304_FEEDBACK_ONE_THIRD" };
   const char* MPM54304UnderVoltageThreshold_names[] = { "MPM54304_UVLO_THRESHOLD_3500mV", "MPM54304_UVLO_THRESHOLD_4500mV", "MPM54304_UVLO_THRESHOLD_5800mV", "MPM54304_UVLO_THRESHOLD_8500mV" };
-  const char* MPM54304OutputPortSyncMode_names[] = { "MPM54304_OP_SYNCOUT_PULL_LOW", "MPM54304_OP_SYNCOUT_OPEN_DRAIN" };
+  const char* MPM54304OutputPinGPIOState_names[] = { "MPM54304_OP_GPIO_STATE_PULL_LOW", "MPM54304_OP_GPIO_STATE_OPEN_DRAIN" };
   const char* MPM54304SwitchingFrequency_names[] = { "MPM54304_SWITCHING_533KHz", "MPM54304_SWITCHING_800KHz", "MPM54304_SWITCHING_1060KHz", "MPM54304_SWITCHING_1600KHz" };
   const char* MPM54304OutputPinFunction_names[] = { "MPM54304_OUTPUT_PIN_ADDRESS", "MPM54304_OUTPUT_PIN_POWER_GOOD", "MPM54304_OUTPUT_PIN_GPIO", "MPM54304_OUTPUT_PIN_SYNC" };
   const char* MPM54304PowerGoodDelay_names[] = { "MPM54304_PG_DELAY_200us", "MPM54304_PG_DELAY_5ms", "MPM54304_PG_DELAY_25ms", "MPM54304_PG_DELAY_75ms", "MPM54304_PG_DELAY_200ms" };
@@ -97,7 +97,7 @@ void MPM54304::printConfig()
   Serial.print("MPM54304_SYSTEM_CONFIG.EnableBuck3 = "); Serial.println(syscfg->EnableBuck3 ? "true" : "false");
   Serial.print("MPM54304_SYSTEM_CONFIG.EnableBuck4 = "); Serial.println(syscfg->EnableBuck4 ? "true" : "false");
   Serial.print("MPM54304_SYSTEM_CONFIG.UnderVoltageThreshold = "); Serial.print(MPM54304UnderVoltageThreshold_names[syscfg->UnderVoltageThreshold]); Serial.println("");
-  Serial.print("MPM54304_SYSTEM_CONFIG.OutputPortSyncMode = "); Serial.print(MPM54304OutputPortSyncMode_names[syscfg->OutputPortSyncMode]); Serial.println("");
+  Serial.print("MPM54304_SYSTEM_CONFIG.OutputPinGPIOState = "); Serial.print(MPM54304OutputPinGPIOState_names[syscfg->OutputPinGPIOState]); Serial.println("");
   Serial.print("MPM54304_SYSTEM_CONFIG.Reg0x0D = 0x"); Serial.print(syscfg->Reg0x0D, HEX); Serial.println("");
   Serial.print("MPM54304_SYSTEM_CONFIG.SwitchingFrequency = "); Serial.print(MPM54304SwitchingFrequency_names[syscfg->SwitchingFrequency]); Serial.println("");
   Serial.print("MPM54304_SYSTEM_CONFIG.ShutdownDelayEnable = "); Serial.println(syscfg->ShutdownDelayEnable ? "true" : "false");
@@ -235,18 +235,18 @@ void MPM54304::setUnderVoltageThreshold(MPM54304UnderVoltageThreshold threshold)
 }
 
 
-// returns a MPM54304OutputPortSyncMode value representing the current output port sync out mode.
-MPM54304OutputPortSyncMode MPM54304::getOutputPortSyncMode()
+// returns a MPM54304OutputPinGPIOState value representing the current GPIO state of the OP pin
+MPM54304OutputPinGPIOState MPM54304::getOutputPinGPIOState()
 {
-  return this->_systemConfig.OutputPortSyncMode;
+  return this->_systemConfig.OutputPinGPIOState;
 }
 
 
-// sets the behaviour of the output port sync out mode, using a MPM54304OutputPortSyncMode value. this only has meaning when the OP pin is configured for sync out.
-void MPM54304::setOutputPortSyncMode(MPM54304OutputPortSyncMode syncMode)
+// sets the GPIO state of the OP pin, using a MPM54304OutputPinGPIOState value. this only has meaning when the OP pin is configured for GPIO mode.
+void MPM54304::setOutputPinGPIOState(MPM54304OutputPinGPIOState syncMode)
 {
   MPM54304_SET_DIRTY;
-  this->_systemConfig.OutputPortSyncMode = syncMode;
+  this->_systemConfig.OutputPinGPIOState = syncMode;
 }
 
 

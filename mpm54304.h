@@ -121,10 +121,10 @@ enum MPM54304UnderVoltageThreshold : uint8_t
   MPM54304_UVLO_THRESHOLD_8500mV = 0b11,
 };
 
-enum MPM54304OutputPortSyncMode : uint8_t
+enum MPM54304OutputPinGPIOState : uint8_t
 {
-  MPM54304_OP_SYNCOUT_PULL_LOW = 0,
-  MPM54304_OP_SYNCOUT_OPEN_DRAIN = 1,
+  MPM54304_OP_GPIO_STATE_PULL_LOW = 0,
+  MPM54304_OP_GPIO_STATE_OPEN_DRAIN = 1,
 };
 
 enum MPM54304SwitchingFrequency : uint8_t
@@ -217,7 +217,7 @@ struct __attribute__((packed)) MPM54304_SYSTEM_CONFIG
         uint8_t Reg0x0C;
         struct
         {
-          MPM54304OutputPortSyncMode OutputPortSyncMode : 1; // OP_BIT
+          MPM54304OutputPinGPIOState OutputPinGPIOState : 1; // OP_BIT
           MPM54304UnderVoltageThreshold UnderVoltageThreshold : 2; // UVLO
           bool _padding_0x4c_bit3 : 1;
           bool EnableBuck4 : 1; // EN4
@@ -334,8 +334,8 @@ public:
   MPM54304UnderVoltageThreshold getUnderVoltageThreshold();
   void setUnderVoltageThreshold(MPM54304UnderVoltageThreshold threshold);
   
-  MPM54304OutputPortSyncMode getOutputPortSyncMode();
-  void setOutputPortSyncMode(MPM54304OutputPortSyncMode syncMode);
+  MPM54304OutputPinGPIOState getOutputPinGPIOState();
+  void setOutputPinGPIOState(MPM54304OutputPinGPIOState gpioState);
   
   MPM54304SwitchingFrequency getSwitchingFrequency();
   void setSwitchingFrequency(MPM54304SwitchingFrequency freq);
