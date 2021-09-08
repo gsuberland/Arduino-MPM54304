@@ -32,6 +32,7 @@
 #define MPM54304_BUCK_CONFIG_SIZE (3)
 #define MPM54304_BUCK_CONFIG_REG_BASE (0x00)
 
+#define MPM54304_VREF_STEP_INT (10)
 #define MPM54304_VREF_STEP_FP (0.01)
 #define MPM54304_VREF_MIN_INT (550)
 #define MPM54304_VREF_MIN_FP (0.55)
@@ -68,6 +69,7 @@ enum MPM54304I2CStatus : uint16_t
   MPM54034_I2C_STATUS_NACK_ON_DATA = 3,
   MPM54034_I2C_STATUS_ERROR = 4,
   MPM54034_I2C_STATUS_WRITE_LENGTH_MISMATCH = 0x8000,
+  MPM54034_I2C_STATUS_INSUFFICIENT_DATA = 0x8001,
 };
 
 // soft start slew rate in uV/us
@@ -150,7 +152,9 @@ enum MPM54304PowerGoodDelay : uint8_t
   MPM54304_PG_DELAY_200ms  = 0b100,
 };
 
-struct MPM54304_BUCK_CONFIG
+#pragma pack(push, 1)
+
+struct __attribute__((__packed__)) MPM54304_BUCK_CONFIG
 {
   union
   {
@@ -199,7 +203,8 @@ struct MPM54304_BUCK_CONFIG
   };
 };
 
-struct MPM54304_SYSTEM_CONFIG
+
+struct __attribute__((packed)) MPM54304_SYSTEM_CONFIG
 {
   union
   {
@@ -212,13 +217,10 @@ struct MPM54304_SYSTEM_CONFIG
         uint8_t Reg0x0C;
         struct
         {
-          struct
-          {
-            bool Buck1 : 1; // EN1
-            bool Buck2 : 1; // EN2
-            bool Buck3 : 1; // EN3
-            bool Buck4 : 1; // EN4
-          } Enable;
+          bool EnableBuck1 : 1; // EN1
+          bool EnableBuck2 : 1; // EN2
+          bool EnableBuck3 : 1; // EN3
+          bool EnableBuck4 : 1; // EN4
           bool _padding_0x4c_bit3 : 1;
           MPM54304UnderVoltageThreshold UnderVoltageThreshold : 2; // UVLO
           MPM54304OutputPortSyncMode OutputPortSyncMode : 1; // OP_BIT
@@ -273,13 +275,10 @@ struct MPM54304_SYSTEM_CONFIG
         uint8_t Reg0x12;
         struct
         {
-          struct
-          {
-            bool Buck1 : 1; // PG1
-            bool Buck2 : 1; // PG2
-            bool Buck3 : 1; // PG3
-            bool Buck4 : 1; // PG 4
-          } PowerGood;
+          bool PowerGoodBuck1 : 1; // PG1
+          bool PowerGoodBuck2 : 1; // PG2
+          bool PowerGoodBuck3 : 1; // PG3
+          bool PowerGoodBuck4 : 1; // PG4
           bool OverTemperatureWarning : 1; // OT Warning
           bool OverTemperatureProtection : 1; // OTP
           uint8_t _padding : 2;
@@ -299,6 +298,8 @@ struct MPM54304_SYSTEM_CONFIG
     };
   };
 };
+
+#pragma pack(pop)
 
 class MPM54304
 {
@@ -410,7 +411,7 @@ public:
 
   uint16_t getReferenceVoltage(uint8_t buck);
   // sets the reference to 550-1790mV, in steps of 10mV
-  bool setReferenceVoltage(uint8_t buck, uint8_t millivolts);
+  bool setReferenceVoltage(uint8_t buck, uint16_t millivolts);
   
   // sets the nearest available output voltage (rounding up) by a combination of reference voltage and feedback ratio. returns the resulting reference voltage in mV, or 0 if the value was out of range.
   uint16_t setOutputVoltage(uint8_t buck, float volts);

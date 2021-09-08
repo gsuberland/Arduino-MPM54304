@@ -12,6 +12,16 @@
 #include "mpm54304.h"
 
 
+// flip bit order of a byte
+inline uint8_t flipByte(uint8_t c)
+{
+  c = ((c>>1)&0x55) | ((c<<1)&0xAA);
+  c = ((c>>2)&0x33) | ((c<<2)&0xCC);
+  c = (c>>4) | (c<<4) ;
+  return c;
+}
+
+
 MPM54304::MPM54304(uint8_t addr)
 {
   // check if the address is a valid one for MPM54304. if not, set the default.
@@ -93,13 +103,13 @@ bool MPM54304::getBuckEnabled(uint8_t buck)
   switch (buck)
   {
     case MPM54304_BUCK1:
-      return this->_systemConfig.Enable.Buck1;
+      return this->_systemConfig.EnableBuck1;
     case MPM54304_BUCK2:
-      return this->_systemConfig.Enable.Buck2;
+      return this->_systemConfig.EnableBuck2;
     case MPM54304_BUCK3:
-      return this->_systemConfig.Enable.Buck3;
+      return this->_systemConfig.EnableBuck3;
     case MPM54304_BUCK4:
-      return this->_systemConfig.Enable.Buck4;
+      return this->_systemConfig.EnableBuck4;
     default:
       assert(false); // should never reach here.
   }
@@ -114,16 +124,16 @@ void MPM54304::setBuckEnabled(uint8_t buck, bool enable)
   switch (buck)
   {
     case MPM54304_BUCK1:
-      this->_systemConfig.Enable.Buck1 = enable;
+      this->_systemConfig.EnableBuck1 = enable;
       break;
     case MPM54304_BUCK2:
-      this->_systemConfig.Enable.Buck2 = enable;
+      this->_systemConfig.EnableBuck2 = enable;
       break;
     case MPM54304_BUCK3:
-      this->_systemConfig.Enable.Buck3 = enable;
+      this->_systemConfig.EnableBuck3 = enable;
       break;
     case MPM54304_BUCK4:
-      this->_systemConfig.Enable.Buck4 = enable;
+      this->_systemConfig.EnableBuck4 = enable;
       break;
     default:
       assert(false); // should never reach here.
@@ -346,13 +356,13 @@ bool MPM54304::getPowerGood(uint8_t buck)
   switch (buck)
   {
     case MPM54304_BUCK1:
-      return this->_systemConfig.PowerGood.Buck1;
+      return this->_systemConfig.PowerGoodBuck1;
     case MPM54304_BUCK2:
-      return this->_systemConfig.PowerGood.Buck2;
+      return this->_systemConfig.PowerGoodBuck2;
     case MPM54304_BUCK3:
-      return this->_systemConfig.PowerGood.Buck3;
+      return this->_systemConfig.PowerGoodBuck3;
     case MPM54304_BUCK4:
-      return this->_systemConfig.PowerGood.Buck4;
+      return this->_systemConfig.PowerGoodBuck4;
     default:
       assert(false); // should never reach here.
   }
@@ -568,20 +578,26 @@ uint16_t MPM54304::getReferenceVoltage(uint8_t buck)
 {
   ASSERT_MPM54034_BUCK_INDEX_VALID(buck);
   
-  return this->_buckConfig[buck].VoltageReference + MPM54304_VREF_MIN_INT;
+  return (this->_buckConfig[buck].VoltageReference * MPM54304_VREF_STEP_INT) + MPM54304_VREF_MIN_INT;
 }
 
 
-bool MPM54304::setReferenceVoltage(uint8_t buck, uint8_t millivolts)
+bool MPM54304::setReferenceVoltage(uint8_t buck, uint16_t millivolts)
 {
   ASSERT_MPM54034_BUCK_INDEX_VALID(buck);
+
+  if ((millivolts % MPM54304_VREF_STEP_INT) != 0)
+  {
+    millivolts -= millivolts % MPM54304_VREF_STEP_INT;
+    millivolts += MPM54304_VREF_STEP_INT;
+  }
 
   if ((millivolts < MPM54304_VREF_MIN_INT) || (millivolts > MPM54304_VREF_MAX_INT))
     return false;
   
   MPM54304_SET_DIRTY;
   
-  this->_buckConfig[buck].VoltageReference = millivolts - MPM54304_VREF_MIN_INT;
+  this->_buckConfig[buck].VoltageReference = (millivolts - MPM54304_VREF_MIN_INT) / MPM54304_VREF_STEP_INT;
 }
 
 
@@ -699,21 +715,31 @@ bool MPM54304::readRegister(uint8_t reg, uint8_t* value)
     return false;
   }
 
+  // end transmission and get I2C bus status
+  MPM54304I2CStatus status = (MPM54304I2CStatus)Wire.endTransmission();
+  this->_lastI2CStatus = status;
+  if (status != MPM54034_I2C_STATUS_OK)
+  {
+    return false;
+  }
+
+  Wire.requestFrom((int)this->_address, 1);
+
+  if (Wire.available() < 1)
+  {
+    this->_lastI2CStatus = MPM54034_I2C_STATUS_INSUFFICIENT_DATA;
+    return false;
+  }
+
   // read result back
-  *value = Wire.read();
+  *value = flipByte(Wire.read());
   
   Serial.print("reg 0x");
   Serial.print(reg, HEX);
   Serial.print(" = ");
   Serial.println(*value, HEX);
 
-  // end transmission and get I2C bus status
-  MPM54304I2CStatus status = (MPM54304I2CStatus)Wire.endTransmission();
-  this->_lastI2CStatus = status;
-
-  
-  
-  return status == MPM54034_I2C_STATUS_OK;
+  return true;
 }
 
 
@@ -730,7 +756,7 @@ bool MPM54304::writeRegister(uint8_t reg, uint8_t value)
   // write register address and data
   uint8_t data[2];
   data[0] = reg;
-  data[1] = value;
+  data[1] = flipByte(value);
   if (Wire.write(data, 2) != 2)
   {
     this->_lastI2CStatus = MPM54034_I2C_STATUS_WRITE_LENGTH_MISMATCH;
@@ -758,10 +784,15 @@ bool MPM54304::writeRegisters(uint8_t base, uint8_t* values, size_t bytes)
   // start register read
   Wire.beginTransmission(this->_address);
 
-  // write register address and data
+  // create buffer and prefix it with the base register address
   uint8_t buffer[33];
   buffer[0] = base;
-  memcpy(buffer + 1, values, bytes);
+  // copy the bytes into the buffer in reverse bit order
+  for (size_t i = 0; i < bytes; i++)
+  {
+    buffer[i+1] = flipByte(values[i]);
+  }
+  // write register address and data
   if (Wire.write(buffer, bytes) != bytes)
   {
     this->_lastI2CStatus = MPM54034_I2C_STATUS_WRITE_LENGTH_MISMATCH;
