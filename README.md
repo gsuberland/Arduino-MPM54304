@@ -22,6 +22,7 @@ void setClock400KHz();
 void setClock1000KHz();
 void setClock3400KHz();
 
+// print a human-readable version of the entire device config
 void printConfig();
 ```
 
