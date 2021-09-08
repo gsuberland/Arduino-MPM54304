@@ -36,8 +36,8 @@ void setBuckEnabled(uint8_t buck, bool enable);
 MPM54304UnderVoltageThreshold getUnderVoltageThreshold();
 void setUnderVoltageThreshold(MPM54304UnderVoltageThreshold threshold);
 
-MPM54304OutputPortSyncMode getOutputPortSyncMode();
-void setOutputPortSyncMode(MPM54304OutputPortSyncMode syncMode);
+MPM54304OutputPinGPIOState getOutputPinGPIOState();
+void setOutputPinGPIOState(MPM54304OutputPinGPIOState gpioState);
 
 MPM54304SwitchingFrequency getSwitchingFrequency();
 void setSwitchingFrequency(MPM54304SwitchingFrequency freq);
