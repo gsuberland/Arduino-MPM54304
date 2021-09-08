@@ -720,7 +720,7 @@ uint16_t MPM54304::setOutputVoltage(uint8_t buck, float volts)
   if (millivolts <= MPM54304_VREF_MAX_INT)
   {
     MPM54304_SET_DIRTY;
-    this->_buckConfig[buck].VoltageReference = millivolts - MPM54304_VOUT_MIN_INT;
+    this->_buckConfig[buck].VoltageReference = (millivolts / MPM54304_VREF_STEP_INT) - MPM54304_VOUT_MIN_INT;
     this->_buckConfig[buck].FeedbackRatio = MPM54304_FEEDBACK_DIRECT;
     return millivolts;
   }
@@ -728,16 +728,16 @@ uint16_t MPM54304::setOutputVoltage(uint8_t buck, float volts)
   // voltage is greater than the maximum Vref, so we need 1/3 feed.
   
   // re-calculate the output voltage as 1/3 the output voltage
-  volts /= 3;
-  millivolts = (uint16_t)ceil(volts * 100) * 10;
-  millivolts = constrain(millivolts, MPM54304_VOUT_MIN_INT, MPM54304_VOUT_MAX_INT);
+  float vref_f = volts / 3.0;
+  uint16_t vref = (uint16_t)ceil(vref_f * (1000 / MPM54304_VREF_STEP_INT)) * MPM54304_VREF_STEP_INT;
+  vref = constrain(vref, MPM54304_VOUT_MIN_INT, MPM54304_VOUT_MAX_INT);
 
   // update registers
   MPM54304_SET_DIRTY;
-  this->_buckConfig[buck].VoltageReference = millivolts - MPM54304_VOUT_MIN_INT;
+  this->_buckConfig[buck].VoltageReference = (vref / MPM54304_VREF_STEP_INT) - MPM54304_VOUT_MIN_INT;
   this->_buckConfig[buck].FeedbackRatio = MPM54304_FEEDBACK_ONE_THIRD;
 
-  return millivolts;
+  return vref;
 }
 
 
