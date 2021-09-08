@@ -12,16 +12,6 @@
 #include "mpm54304.h"
 
 
-// flip bit order of a byte
-inline uint8_t flipByte(uint8_t c)
-{
-  c = ((c>>1)&0x55) | ((c<<1)&0xAA);
-  c = ((c>>2)&0x33) | ((c<<2)&0xCC);
-  c = (c>>4) | (c<<4) ;
-  return c;
-}
-
-
 MPM54304::MPM54304(uint8_t addr)
 {
   // check if the address is a valid one for MPM54304. if not, set the default.
@@ -49,6 +39,7 @@ bool MPM54304::update(bool forceWrite)
 {
   if (forceWrite || this->_dirty)
   {
+    Serial.println("update() : writing config");
     if (!this->writeAllConfig())
       return false;
     this->_dirty = false;
@@ -161,6 +152,12 @@ void MPM54304::printConfig()
 }
 
 
+MPM54304I2CStatus MPM54304::getLastI2CStatus()
+{
+  return this->_lastI2CStatus;
+}
+
+
 /*
  * System config
  */
@@ -168,13 +165,13 @@ void MPM54304::printConfig()
 
 void MPM54304::enableBuck(uint8_t buck)
 {
-  setBuckEnabled(buck, true);
+  this->setBuckEnabled(buck, true);
 }
 
 
 void MPM54304::disableBuck(uint8_t buck)
 {
-  setBuckEnabled(buck, false);
+  this->setBuckEnabled(buck, false);
 }
 
 
@@ -709,18 +706,18 @@ uint16_t MPM54304::setOutputVoltage(uint8_t buck, float volts)
 
   // clamp to acceptable range
   volts = constrain(volts, MPM54304_VOUT_MIN_FP, MPM54304_VOUT_MAX_FP);
-
+  
   // convert this to a millivolt value, rounding up to the nearest 10mV
   uint16_t millivolts = (uint16_t)ceil(volts * 100) * 10;
   
   // constrain the result to the the min/max, just in case ceil() does something strange
   millivolts = constrain(millivolts, MPM54304_VOUT_MIN_INT, MPM54304_VOUT_MAX_INT);
-
+  
   // if we're under the maximum Vref, we can use direct feed.
   if (millivolts <= MPM54304_VREF_MAX_INT)
   {
     MPM54304_SET_DIRTY;
-    this->_buckConfig[buck].VoltageReference = (millivolts / MPM54304_VREF_STEP_INT) - MPM54304_VOUT_MIN_INT;
+    this->_buckConfig[buck].VoltageReference = (millivolts - MPM54304_VOUT_MIN_INT) / MPM54304_VREF_STEP_INT;
     this->_buckConfig[buck].FeedbackRatio = MPM54304_FEEDBACK_DIRECT;
     return millivolts;
   }
@@ -734,9 +731,8 @@ uint16_t MPM54304::setOutputVoltage(uint8_t buck, float volts)
 
   // update registers
   MPM54304_SET_DIRTY;
-  this->_buckConfig[buck].VoltageReference = (vref / MPM54304_VREF_STEP_INT) - MPM54304_VOUT_MIN_INT;
+  this->_buckConfig[buck].VoltageReference = (vref - MPM54304_VOUT_MIN_INT) / MPM54304_VREF_STEP_INT;
   this->_buckConfig[buck].FeedbackRatio = MPM54304_FEEDBACK_ONE_THIRD;
-
   return vref;
 }
 
@@ -773,12 +769,6 @@ bool MPM54304::validateAddress(uint8_t addr)
 
 bool MPM54304::readRegister(uint8_t reg, uint8_t* value)
 {
-  Serial.print("MPM54304::readRegister(0x");
-  Serial.print(reg, HEX);
-  Serial.print(", ");
-  Serial.print((size_t)value, HEX);
-  Serial.println(");");
-  
   // assert that the currently configured address is ok
   ASSERT_MPM54304_I2C_ADDRESS_VALID(this->_address);
   // assert that the given register address is in bounds (0x00-0x13, 0x40-0x52)
@@ -814,13 +804,8 @@ bool MPM54304::readRegister(uint8_t reg, uint8_t* value)
   }
 
   // read result back
-  *value = flipByte(Wire.read());
+  *value = Wire.read();
   
-  Serial.print("reg 0x");
-  Serial.print(reg, HEX);
-  Serial.print(" = ");
-  Serial.println(*value, HEX);
-
   return true;
 }
 
@@ -838,7 +823,7 @@ bool MPM54304::writeRegister(uint8_t reg, uint8_t value)
   // write register address and data
   uint8_t data[2];
   data[0] = reg;
-  data[1] = flipByte(value);
+  data[1] = value;
   if (Wire.write(data, 2) != 2)
   {
     this->_lastI2CStatus = MPM54034_I2C_STATUS_WRITE_LENGTH_MISMATCH;
@@ -861,25 +846,29 @@ bool MPM54304::writeRegisters(uint8_t base, uint8_t* values, size_t bytes)
   // check that register address is in bounds (0x00-0x13, 0x40-0x52)
   ASSERT_MP54304_REGISTER_VALID(base);
   // check that the byte count fits in the I2C buffer (32 bytes)
-  assert(bytes <= 32);
+  assert(bytes <= 31);
 
   // start register read
   Wire.beginTransmission(this->_address);
 
   // create buffer and prefix it with the base register address
-  uint8_t buffer[33];
+  uint8_t buffer[32];
   buffer[0] = base;
   // copy the bytes into the buffer in reverse bit order
   for (size_t i = 0; i < bytes; i++)
   {
-    buffer[i+1] = flipByte(values[i]);
+    buffer[i+1] = values[i];
   }
+  
   // write register address and data
-  if (Wire.write(buffer, bytes) != bytes)
+  for (size_t i = 0; i < bytes + 1; i++)
   {
-    this->_lastI2CStatus = MPM54034_I2C_STATUS_WRITE_LENGTH_MISMATCH;
-    Wire.endTransmission();
-    return false;
+    if (Wire.write(buffer[i]) != 1)
+    {
+      this->_lastI2CStatus = MPM54034_I2C_STATUS_WRITE_LENGTH_MISMATCH;
+      Wire.endTransmission();
+      return false;
+    }
   }
 
   // end transmission and get I2C bus status
@@ -897,7 +886,7 @@ bool MPM54304::readSystemConfig()
   // read the system config data into an array, returning false if any of the register reads fail.
   for (size_t i = 0; i < MPM54304_SYSTEM_CONFIG_SIZE; i++)
   {
-    if (!this->readRegister(MPM54304_SYSTEM_CONFIG_REG_BASE + (uint8_t)i, &(systemConfigData[i])))
+    if (!this->readRegister(MPM54304_SYSTEM_CONFIG_REG_BASE + (uint8_t)i, systemConfigData + i))
       return false;
   }
 
@@ -944,7 +933,7 @@ bool MPM54304::readBuckConfig(uint8_t buck)
   uint8_t buckConfigData[MPM54304_BUCK_CONFIG_SIZE];
   for (size_t i = 0; i < MPM54304_BUCK_CONFIG_SIZE; i++)
   {
-    if (!this->readRegister(buckRegisterBase + (uint8_t)i, &(buckConfigData[i])))
+    if (!this->readRegister(buckRegisterBase + (uint8_t)i, buckConfigData + i))
       return false;
   }
 
@@ -984,7 +973,7 @@ bool MPM54304::writeAllConfig()
   }
   
   // copy the system config in afterwards (0x0C - 0x10)
-  memcpy(configData, this->_systemConfig.RawData, MPM54304_SYSTEM_CONFIG_WRITE_SIZE);
+  memcpy(configData + ofs, this->_systemConfig.RawData, MPM54304_SYSTEM_CONFIG_WRITE_SIZE);
 
   // write to the device
   bool success = this->writeRegisters(0, configData, CONFIG_DATA_SIZE);

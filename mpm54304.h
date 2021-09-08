@@ -169,10 +169,10 @@ struct __attribute__((__packed__)) MPM54304_BUCK_CONFIG
         uint8_t Byte0;
         struct
         {
-          uint8_t _padding : 2;
-          uint8_t SoftStartDelayMillis : 2;
-          bool AdditionalPhaseDelay : 1;
           MPM54304SlewRate SoftStartTime : 3;
+          bool AdditionalPhaseDelay : 1;
+          uint8_t SoftStartDelayMillis : 2;
+          uint8_t _padding : 2;
         };
       };
       // +0x01
@@ -181,12 +181,12 @@ struct __attribute__((__packed__)) MPM54304_BUCK_CONFIG
         uint8_t Byte1;
         struct
         {
-          bool VoltageOutLimitEnable : 1; // Vout_Limit_ENx
-          MPM54304SwitchingMode SwitchingMode : 1; // Mode
-          MPM54304CurrentLimit CurrentLimit : 2;
-          bool OverVoltageProtectionEnable : 1; // VOUT_OVP_ENx
-          MPM54304PhaseDelay PhaseDelay : 2;
           bool VoltageOutDischargeEnable : 1; // VOUT_DIS_ENx
+          MPM54304PhaseDelay PhaseDelay : 2;
+          bool OverVoltageProtectionEnable : 1; // VOUT_OVP_ENx
+          MPM54304CurrentLimit CurrentLimit : 2;
+          MPM54304SwitchingMode SwitchingMode : 1; // Mode
+          bool VoltageOutLimitEnable : 1; // Vout_Limit_ENx
         };
       };
       // +0x02
@@ -195,8 +195,8 @@ struct __attribute__((__packed__)) MPM54304_BUCK_CONFIG
         uint8_t Byte2;
         struct
         {
-          MPM54304FeedbackRatio FeedbackRatio : 1; // Vout_Selectx
           uint8_t VoltageReference : 7; // Vref = 550mV + (VoltageReference * 10mV)
+          MPM54304FeedbackRatio FeedbackRatio : 1; // Vout_Selectx
         };
       };
     };
@@ -217,13 +217,13 @@ struct __attribute__((packed)) MPM54304_SYSTEM_CONFIG
         uint8_t Reg0x0C;
         struct
         {
-          bool EnableBuck1 : 1; // EN1
-          bool EnableBuck2 : 1; // EN2
-          bool EnableBuck3 : 1; // EN3
-          bool EnableBuck4 : 1; // EN4
-          bool _padding_0x4c_bit3 : 1;
-          MPM54304UnderVoltageThreshold UnderVoltageThreshold : 2; // UVLO
           MPM54304OutputPortSyncMode OutputPortSyncMode : 1; // OP_BIT
+          MPM54304UnderVoltageThreshold UnderVoltageThreshold : 2; // UVLO
+          bool _padding_0x4c_bit3 : 1;
+          bool EnableBuck4 : 1; // EN4
+          bool EnableBuck3 : 1; // EN3
+          bool EnableBuck2 : 1; // EN2
+          bool EnableBuck1 : 1; // EN1
         };
       };
     
@@ -232,9 +232,9 @@ struct __attribute__((packed)) MPM54304_SYSTEM_CONFIG
         uint8_t Reg0x0D;
         struct
         {
-          MPM54304SwitchingFrequency SwitchingFrequency : 2; // FREQ
-          bool ShutdownDelayEnable : 1; // Shutdown_Delay_EN
           uint8_t I2CAddress : 5; // bits A5 to A1 of the I2C address can be set here. bits A7 and A6 are always 1.
+          bool ShutdownDelayEnable : 1; // Shutdown_Delay_EN
+          MPM54304SwitchingFrequency SwitchingFrequency : 2; // FREQ
         };
       };
     
@@ -243,11 +243,11 @@ struct __attribute__((packed)) MPM54304_SYSTEM_CONFIG
         uint8_t Reg0x0E;
         struct
         {
-          MPM54304OutputPinFunction OutputPinFunction : 2; // ADD_PG_OP_SYNCOUT
-          bool MTPProgram : 1;
-          MPM54304PowerGoodDelay PowerGoodDelay : 3; // PG_Delay
-          bool ParallelBuck34 : 1; // Parallel_2
           bool ParallelBuck12 : 1; // Parallel_1
+          bool ParallelBuck34 : 1; // Parallel_2
+          MPM54304PowerGoodDelay PowerGoodDelay : 3; // PG_Delay
+          bool MTPProgram : 1;
+          MPM54304OutputPinFunction OutputPinFunction : 2; // ADD_PG_OP_SYNCOUT
         };
       };
     
@@ -275,13 +275,13 @@ struct __attribute__((packed)) MPM54304_SYSTEM_CONFIG
         uint8_t Reg0x12;
         struct
         {
-          bool PowerGoodBuck1 : 1; // PG1
-          bool PowerGoodBuck2 : 1; // PG2
-          bool PowerGoodBuck3 : 1; // PG3
-          bool PowerGoodBuck4 : 1; // PG4
-          bool OverTemperatureWarning : 1; // OT Warning
-          bool OverTemperatureProtection : 1; // OTP
           uint8_t _padding : 2;
+          bool OverTemperatureProtection : 1; // OTP
+          bool OverTemperatureWarning : 1; // OT Warning
+          bool PowerGoodBuck4 : 1; // PG4
+          bool PowerGoodBuck3 : 1; // PG3
+          bool PowerGoodBuck2 : 1; // PG2
+          bool PowerGoodBuck1 : 1; // PG1
         };
       };
     
@@ -290,9 +290,9 @@ struct __attribute__((packed)) MPM54304_SYSTEM_CONFIG
         uint8_t Reg0x13;
         struct
         {
-          uint8_t VendorID : 4;
-          bool ChecksumFlag : 1;
           uint8_t CurrentMTPPageIndex : 3;
+          bool ChecksumFlag : 1;
+          uint8_t VendorID : 4;
         };
       };
     };
@@ -310,6 +310,8 @@ public:
   
   bool begin();
   bool update(bool forceWrite = false);
+
+  MPM54304I2CStatus getLastI2CStatus();
   
   MPM54304_BUCK_CONFIG* getBuckConfigUnsafe(uint8_t buck);
   MPM54304_SYSTEM_CONFIG* getSystemConfigUnsafe();
